@@ -18,9 +18,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -51,6 +52,31 @@ func TestValidateImageLayout(t *testing.T) {
 
 func TestValidateConfig(t *testing.T) {
 	validate(t, "../config.md")
+}
+
+func TestSchemaFS(t *testing.T) {
+	expectedSchemaFileNames, err := filepath.Glob("*.json")
+	if err != nil {
+		t.Error(err)
+	}
+
+	dir, err := schema.FileSystem().Open("/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := dir.Readdir(-1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schemaFileNames []string
+	for _, f := range files {
+		schemaFileNames = append(schemaFileNames, f.Name())
+	}
+
+	if !reflect.DeepEqual(schemaFileNames, expectedSchemaFileNames) {
+		t.Fatalf("got %v, expected %v", schemaFileNames, expectedSchemaFileNames)
+	}
 }
 
 // TODO(sur): include examples from all specification files
@@ -95,7 +121,6 @@ func validate(t *testing.T, name string) {
 		}
 
 		for _, err := range errs {
-			// TOOD(stevvooe): This is nearly useless without file, line no.
 			printFields(t, "invalid", example.Mediatype, example.Title)
 			t.Error(err)
 			fmt.Println(example.Body, "---")
@@ -157,7 +182,7 @@ func parseExample(lang, body string) (e example) {
 }
 
 func extractExamples(rd io.Reader) ([]example, error) {
-	p, err := ioutil.ReadAll(rd)
+	p, err := io.ReadAll(rd)
 	if err != nil {
 		return nil, err
 	}

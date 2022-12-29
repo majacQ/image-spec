@@ -1,19 +1,23 @@
-GO15VENDOREXPERIMENT=1
-export GO15VENDOREXPERIMENT
+EPOCH_TEST_COMMIT ?= v0.2.0
 
 DOCKER ?= $(shell command -v docker 2>/dev/null)
 PANDOC ?= $(shell command -v pandoc 2>/dev/null)
 
+GOPATH:=$(shell go env GOPATH)
+
+OUTPUT_DIRNAME	?= output
+DOC_FILENAME	?= oci-image-spec
+
+PANDOC_CONTAINER ?= ghcr.io/opencontainers/pandoc:2.9.2.1-8.fc33.x86_64@sha256:5d81ff930a043295a557be8b003ece2a33d14e91b28c50d368413b83372f8d28
 ifeq "$(strip $(PANDOC))" ''
 	ifneq "$(strip $(DOCKER))" ''
 		PANDOC = $(DOCKER) run \
-			-it \
 			--rm \
 			-v $(shell pwd)/:/input/:ro \
 			-v $(shell pwd)/$(OUTPUT_DIRNAME)/:/$(OUTPUT_DIRNAME)/ \
 			-u $(shell id -u) \
 			--workdir /input \
-			docker.io/vbatts/pandoc:1.17.0.3-2.fc25.x86_64
+			$(PANDOC_CONTAINER)
 		PANDOC_SRC := /input/
 		PANDOC_DST := /
 	endif
@@ -26,6 +30,7 @@ DOC_FILES := \
 	descriptor.md \
 	image-layout.md \
 	manifest.md \
+	artifact.md \
 	image-index.md \
 	layer.md \
 	config.md \
@@ -37,12 +42,7 @@ DOC_FILES := \
 FIGURE_FILES := \
 	img/media-types.png
 
-OUTPUT_DIRNAME		?= output/
-DOC_FILENAME	?= oci-image-spec
-
-EPOCH_TEST_COMMIT ?= v0.2.0
-
-TOOLS := esc gitvalidation glide glide-vc
+TOOLS := esc gitvalidation 
 
 default: check-license lint test
 
@@ -52,7 +52,6 @@ help:
 	@echo " * 'docs' - produce document in the $(OUTPUT_DIRNAME) directory"
 	@echo " * 'fmt' - format the json with indentation"
 	@echo " * 'validate-examples' - validate the examples in the specification markdown files"
-	@echo " * 'schema-fs' - regenerate the virtual schema http/FileSystem"
 	@echo " * 'check-license' - check license headers in source files"
 	@echo " * 'lint' - Execute the source code linter"
 	@echo " * 'test' - Execute the unit tests"
@@ -69,35 +68,29 @@ $(OUTPUT_DIRNAME)/$(DOC_FILENAME).pdf: $(DOC_FILES) $(FIGURE_FILES)
 else
 $(OUTPUT_DIRNAME)/$(DOC_FILENAME).pdf: $(DOC_FILES) $(FIGURE_FILES)
 	@mkdir -p $(OUTPUT_DIRNAME)/ && \
-	$(PANDOC) -f markdown_github -t latex --latex-engine=xelatex -o $(PANDOC_DST)$@ $(patsubst %,$(PANDOC_SRC)%,$(DOC_FILES))
+	$(PANDOC) -f gfm -t latex --pdf-engine=xelatex -V geometry:margin=0.5in,bottom=0.8in -V block-headings -o $(PANDOC_DST)$@ $(patsubst %,$(PANDOC_SRC)%,$(DOC_FILES))
 	ls -sh $(realpath $@)
 
 $(OUTPUT_DIRNAME)/$(DOC_FILENAME).html: header.html $(DOC_FILES) $(FIGURE_FILES)
 	@mkdir -p $(OUTPUT_DIRNAME)/ && \
 	cp -ap img/ $(shell pwd)/$(OUTPUT_DIRNAME)/&& \
-	$(PANDOC) -f markdown_github -t html5 -H $(PANDOC_SRC)header.html --standalone -o $(PANDOC_DST)$@ $(patsubst %,$(PANDOC_SRC)%,$(DOC_FILES))
+	$(PANDOC) -f gfm -t html5 -H $(PANDOC_SRC)header.html --standalone -o $(PANDOC_DST)$@ $(patsubst %,$(PANDOC_SRC)%,$(DOC_FILES))
 	ls -sh $(realpath $@)
 endif
 
 header.html: .tool/genheader.go specs-go/version.go
 	go run .tool/genheader.go > $@
 
-validate-examples: schema/fs.go
+validate-examples: schema/schema.go
 	go test -run TestValidate ./schema
-
-schema/fs.go: $(wildcard schema/*.json) schema/gen.go
-	cd schema && printf "%s\n\n%s\n" "$$(cat ../.header)" "$$(go generate)" > fs.go
-
-schema-fs: schema/fs.go
-	@echo "generating schema fs"
 
 check-license:
 	@echo "checking license headers"
 	@./.tool/check-license
 
-lint:
+lint: .install.lint
 	@echo "checking lint"
-	@./.tool/lint
+	@GO111MODULE=on $(GOPATH)/bin/golangci-lint run
 
 test: schema/fs.go
 	go test -race -cover $(shell go list ./... | grep -v /vendor/)
@@ -106,28 +99,26 @@ img/%.png: img/%.dot
 	dot -Tpng $^ > $@
 
 
-# When this is running in travis, it will only check the travis commit range
+# When this is running in GitHub, it will only check the commit range
 .gitvalidation:
 	@which git-validation > /dev/null 2>/dev/null || (echo "ERROR: git-validation not found. Consider 'make install.tools' target" && false)
-ifdef TRAVIS_COMMIT_RANGE
-	git-validation -q -run DCO,short-subject,dangling-whitespace
+ifdef GITHUB_SHA
+	$(GOPATH)/bin/git-validation -q -run DCO,short-subject,dangling-whitespace -range $(GITHUB_SHA)..HEAD
 else
-	git-validation -v -run DCO,short-subject,dangling-whitespace -range $(EPOCH_TEST_COMMIT)..HEAD
+	$(GOPATH)/bin/git-validation -v -run DCO,short-subject,dangling-whitespace -range $(EPOCH_TEST_COMMIT)..HEAD
 endif
 
 install.tools: $(TOOLS:%=.install.%)
 
-.install.esc:
-	go get -u github.com/mjibson/esc
+.install.lint:
+	case "$$(go env GOVERSION)" in \
+	go1.17.*)	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.3;; \
+	go1.18.*)	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.3;; \
+	*) go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest;; \
+	esac
 
 .install.gitvalidation:
-	go get -u github.com/vbatts/git-validation
-
-.install.glide:
-	go get -u github.com/Masterminds/glide
-
-.install.glide-vc:
-	go get -u github.com/sgotti/glide-vc
+	go install github.com/vbatts/git-validation@latest
 
 clean:
 	rm -rf *~ $(OUTPUT_DIRNAME) header.html

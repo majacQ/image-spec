@@ -1,6 +1,6 @@
 ## OCI Image Layout Specification
 
-* The OCI Image Layout is directory structure for OCI content-addressable blobs and [location-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage#Content-addressed_vs._location-addressed) references (refs).
+* The OCI Image Layout is the directory structure for OCI content-addressable blobs and [location-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage#Content-addressed_vs._location-addressed) references (refs).
 * This layout MAY be used in a variety of different transport mechanisms: archive formats (e.g. tar, zip), shared filesystem environments (e.g. nfs), or networked file fetching (e.g. http, ftp, rsync).
 
 Given an image layout and a ref, a tool can create an [OCI Runtime Specification bundle](https://github.com/opencontainers/runtime-spec/blob/v1.0.0/bundle.md) by:
@@ -162,6 +162,7 @@ Those tags will often be represented in an image-layout repository with matching
 ```json,title=Image%20Index&mediatype=application/vnd.oci.image.index.v1%2Bjson
 {
   "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
   "manifests": [
     {
       "mediaType": "application/vnd.oci.image.index.v1+json",
@@ -199,7 +200,11 @@ Those tags will often be represented in an image-layout repository with matching
 }
 ```
 
-This illustrates an index that provides two named manifest references and an auxiliary mediatype for this image layout.
+This illustrates an index that provides two named references and an auxiliary mediatype for this image layout.
 
+The first named reference (`stable-release`) points to another index that might contain multiple references with distinct platforms and annotations.
+Note that the [`org.opencontainers.image.ref.name` annotation](annotations.md) SHOULD only be considered valid when on descriptors on `index.json`.
+
+The second named reference (`v1.0`) points to a manifest that is specific to the linux/ppc64le platform.
 
 [descriptors]: ./descriptor.md

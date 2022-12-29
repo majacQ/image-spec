@@ -110,60 +110,101 @@ Note: Any OPTIONAL field MAY also be set to null, which is equivalent to being a
   The name of the operating system which the image is built to run on.
   Configurations SHOULD use, and implementations SHOULD understand, values listed in the Go Language document for [`GOOS`][go-environment].
 
+- **os.version** *string*, OPTIONAL
+
+  This OPTIONAL property specifies the version of the operating system targeted by the referenced blob.
+  Implementations MAY refuse to use manifests where `os.version` is not known to work with the host OS version.
+  Valid values are implementation-defined. e.g. `10.0.14393.1066` on `windows`.
+
+- **os.features** *array of strings*, OPTIONAL
+
+  This OPTIONAL property specifies an array of strings, each specifying a mandatory OS feature.
+  When `os` is `windows`, image indexes SHOULD use, and implementations SHOULD understand the following values:
+
+  - `win32k`: image requires `win32k.sys` on the host (Note: `win32k.sys` is missing on Nano Server)
+
+- **variant** *string*, OPTIONAL
+
+  The variant of the specified CPU architecture.
+  Configurations SHOULD use, and implementations SHOULD understand, `variant` values listed in the [Platform Variants](image-index.md#platform-variants) table.
+
 - **config** *object*, OPTIONAL
 
   The execution parameters which SHOULD be used as a base when running a container using the image.
   This field can be `null`, in which case any execution parameters should be specified at creation of the container.
 
-   - **User** *string*, OPTIONAL
+  - **User** *string*, OPTIONAL
 
-     The username or UID which is a platform-specific structure that allows specific control over which user the process run as.
-     This acts as a default value to use when the value is not specified when creating a container.
-     For Linux based systems, all of the following are valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
-     If `group`/`gid` is not specified, the default group and supplementary groups of the given `user`/`uid` in `/etc/passwd` from the container are applied.
+    The username or UID which is a platform-specific structure that allows specific control over which user the process run as.
+    This acts as a default value to use when the value is not specified when creating a container.
+    For Linux based systems, all of the following are valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
+    If `group`/`gid` is not specified, the default group and supplementary groups of the given `user`/`uid` in `/etc/passwd` from the container are applied.
 
-   - **ExposedPorts** *object*, OPTIONAL
+  - **ExposedPorts** *object*, OPTIONAL
 
-     A set of ports to expose from a container running this image.
-     Its keys can be in the format of:
+    A set of ports to expose from a container running this image.
+    Its keys can be in the format of:
 `port/tcp`, `port/udp`, `port` with the default protocol being `tcp` if not specified.
-     These values act as defaults and are merged with any specified when creating a container.
-     **NOTE:** This JSON structure value is unusual because it is a direct JSON serialization of the Go type `map[string]struct{}` and is represented in JSON as an object mapping its keys to an empty object.
+    These values act as defaults and are merged with any specified when creating a container.
+    **NOTE:** This JSON structure value is unusual because it is a direct JSON serialization of the Go type `map[string]struct{}` and is represented in JSON as an object mapping its keys to an empty object.
 
-   - **Env** *array of strings*, OPTIONAL
+  - **Env** *array of strings*, OPTIONAL
 
-     Entries are in the format of `VARNAME=VARVALUE`.
-     These values act as defaults and are merged with any specified when creating a container.
+    Entries are in the format of `VARNAME=VARVALUE`.
+    These values act as defaults and are merged with any specified when creating a container.
 
-   - **Entrypoint** *array of strings*, OPTIONAL
+  - **Entrypoint** *array of strings*, OPTIONAL
 
-     A list of arguments to use as the command to execute when the container starts.
-     These values act as defaults and may be replaced by an entrypoint specified when creating a container.
+    A list of arguments to use as the command to execute when the container starts.
+    These values act as defaults and may be replaced by an entrypoint specified when creating a container.
 
-   - **Cmd** *array of strings*, OPTIONAL
+  - **Cmd** *array of strings*, OPTIONAL
 
-     Default arguments to the entrypoint of the container.
-     These values act as defaults and may be replaced by any specified when creating a container.
-     If an `Entrypoint` value is not specified, then the first entry of the `Cmd` array SHOULD be interpreted as the executable to run.
+    Default arguments to the entrypoint of the container.
+    These values act as defaults and may be replaced by any specified when creating a container.
+    If an `Entrypoint` value is not specified, then the first entry of the `Cmd` array SHOULD be interpreted as the executable to run.
 
-   - **Volumes** *object*, OPTIONAL
+  - **Volumes** *object*, OPTIONAL
 
-     A set of directories describing where the process is likely write data specific to a container instance.
-     **NOTE:** This JSON structure value is unusual because it is a direct JSON serialization of the Go type `map[string]struct{}` and is represented in JSON as an object mapping its keys to an empty object.
+    A set of directories describing where the process is likely to write data specific to a container instance.
+    **NOTE:** This JSON structure value is unusual because it is a direct JSON serialization of the Go type `map[string]struct{}` and is represented in JSON as an object mapping its keys to an empty object.
 
-   - **WorkingDir** *string*, OPTIONAL
+  - **WorkingDir** *string*, OPTIONAL
 
-     Sets the current working directory of the entrypoint process in the container.
-     This value acts as a default and may be replaced by a working directory specified when creating a container.
+    Sets the current working directory of the entrypoint process in the container.
+    This value acts as a default and may be replaced by a working directory specified when creating a container.
 
-   - **Labels** *object*, OPTIONAL
+  - **Labels** *object*, OPTIONAL
 
-     The field contains arbitrary metadata for the container.
-     This property MUST use the [annotation rules](annotations.md#rules).
+    The field contains arbitrary metadata for the container.
+    This property MUST use the [annotation rules](annotations.md#rules).
 
   - **StopSignal** *string*, OPTIONAL
 
     The field contains the system call signal that will be sent to the container to exit. The signal can be a signal name in the format `SIGNAME`, for instance `SIGKILL` or `SIGRTMIN+3`.
+
+  - **ArgsEscaped** *boolean*, OPTIONAL
+
+    `[Deprecated]` - This field is present only for legacy compatibility with Docker and should not be used by new image builders.
+    It is used by Docker for Windows images to indicate that the `Entrypoint` or `Cmd` or both, contains only a single element array, that is a pre-escaped, and combined into a single string `CommandLine`.
+    If `true` the value in `Entrypoint` or `Cmd` should be used as-is to avoid double escaping.
+    Note, the exact behavior of `ArgsEscaped` is complex and subject to implementation details in Moby project.
+
+  - **Memory** *integer*, OPTIONAL
+
+    This property is *reserved* for use, to [maintain compatibility](media-types.md#compatibility-matrix).
+
+  - **MemorySwap** *integer*, OPTIONAL
+
+    This property is *reserved* for use, to [maintain compatibility](media-types.md#compatibility-matrix).
+
+  - **CpuShares** *integer*, OPTIONAL
+
+    This property is *reserved* for use, to [maintain compatibility](media-types.md#compatibility-matrix).
+
+  - **Healthcheck** *object*, OPTIONAL
+
+    This property is *reserved* for use, to [maintain compatibility](media-types.md#compatibility-matrix).
 
 - **rootfs** *object*, REQUIRED
 
@@ -264,6 +305,10 @@ Here is an example image configuration JSON document:
         "created": "2015-10-31T22:22:55.613815829Z",
         "created_by": "/bin/sh -c #(nop) CMD [\"sh\"]",
         "empty_layer": true
+      },
+      {
+        "created": "2015-10-31T22:22:56.329850019Z",
+        "created_by": "/bin/sh -c apk add curl"
       }
     ]
 }

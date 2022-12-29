@@ -14,12 +14,10 @@ The Go types and validation should be compatible with the current Go release; ea
 
 Additional documentation about how this group operates:
 
-- [Code of Conduct](https://github.com/opencontainers/tob/blob/d2f9d68c1332870e40693fe077d311e0742bc73d/code-of-conduct.md)
+- [Code of Conduct][code-of-conduct]
 - [Roadmap](#roadmap)
 - [Releases](RELEASES.md)
 - [Project Documentation](project.md)
-
-The _optional_ and _base_ layers of all OCI projects are tracked in the [OCI Scope Table](https://www.opencontainers.org/about/oci-scope-table).
 
 ## Running an OCI Image
 
@@ -39,7 +37,7 @@ To support this UX the OCI Image Format contains sufficient information to launc
 
 **Q: Why doesn't this project mention distribution?**
 
-A: Distribution, for example using HTTP as both Docker v2.2 and AppC do today, is currently out of scope on the [OCI Scope Table](https://www.opencontainers.org/about/oci-scope-table).
+A: Distribution, for example using HTTP as both Docker v2.2 and AppC do today, is currently out of scope.
 There has been [some discussion on the TOB mailing list](https://groups.google.com/a/opencontainers.org/d/msg/tob/A3JnmI-D-6Y/tLuptPDHAgAJ) to make distribution an optional layer, but this topic is a work in progress.
 
 **Q: What happens to AppC or Docker Image Formats?**
@@ -71,12 +69,10 @@ It also guarantees that the design is sound before code is written; a GitHub pul
 Typos and grammatical errors can go straight to a pull-request.
 When in doubt, start on the [mailing-list](#mailing-list).
 
-## Weekly Call
+## Meetings
 
-The contributors and maintainers of all OCI projects have a weekly meeting Wednesdays at 2:00 PM (USA Pacific).
-Everyone is welcome to participate via [UberConference web][UberConference] or audio-only: +1-415-968-0849 (no PIN needed).
-An initial agenda will be posted to the [mailing list](#mailing-list) earlier in the week, and everyone is welcome to propose additional topics or suggest other agenda alterations there.
-Minutes are posted to the [mailing list](#mailing-list) and minutes from past calls are archived [here][minutes].
+Please see the [OCI org repository README](https://github.com/opencontainers/org#meetings) for the most up-to-date information on OCI contributor and maintainer meeting schedules. 
+You can also find links to meeting agendas and minutes for all prior meetings.
 
 ## Mailing List
 
@@ -97,7 +93,7 @@ For example, this paragraph will span three lines in the Markdown source.
 ### Sign your work
 
 The sign-off is a simple line at the end of the explanation for the patch, which certifies that you wrote it or otherwise have the right to pass it on as an open-source patch.
-The rules are pretty simple: if you can certify the below (from [developercertificate.org](http://developercertificate.org/)):
+The rules are pretty simple: if you can certify the below (from [developercertificate.org](https://developercertificate.org/)):
 
 ```
 Developer Certificate of Origin
@@ -149,7 +145,7 @@ You can add the sign off when creating the git commit via `git commit -s`.
 ### Commit Style
 
 Simple house-keeping for clean git history.
-Read more on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/) or the Discussion section of [`git-commit(1)`](http://git-scm.com/docs/git-commit).
+Read more on [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/) or the Discussion section of [`git-commit(1)`](https://git-scm.com/docs/git-commit).
 
 1. Separate the subject from body with a blank line
 2. Limit the subject line to 50 characters
@@ -162,6 +158,5 @@ Read more on [How to Write a Git Commit Message](http://chris.beams.io/posts/git
 8. When possible, one keyword to scope the change in the subject (i.e. "README: ...", "runtime: ...")
 
 
-[UberConference]: https://www.uberconference.com/opencontainers
+[code-of-conduct]: https://github.com/opencontainers/org/blob/master/CODE_OF_CONDUCT.md
 [irc-logs]: http://ircbot.wl.linuxfoundation.org/eavesdrop/%23opencontainers/
-[minutes]: http://ircbot.wl.linuxfoundation.org/meetings/opencontainers/

@@ -9,8 +9,11 @@ The following media types identify the formats described here and their referenc
 - `application/vnd.oci.image.config.v1+json`: [Image config](config.md)
 - `application/vnd.oci.image.layer.v1.tar`: ["Layer", as a tar archive](layer.md)
 - `application/vnd.oci.image.layer.v1.tar+gzip`: ["Layer", as a tar archive](layer.md#gzip-media-types) compressed with [gzip][rfc1952]
+- `application/vnd.oci.image.layer.v1.tar+zstd`: ["Layer", as a tar archive](layer.md#zstd-media-types) compressed with [zstd][rfc8478]
 - `application/vnd.oci.image.layer.nondistributable.v1.tar`: ["Layer", as a tar archive with distribution restrictions](layer.md#non-distributable-layers)
 - `application/vnd.oci.image.layer.nondistributable.v1.tar+gzip`: ["Layer", as a tar archive with distribution restrictions](layer.md#gzip-media-types) compressed with [gzip][rfc1952]
+- `application/vnd.oci.image.layer.nondistributable.v1.tar+zstd`: ["Layer", as a tar archive with distribution restrictions](layer.md#zstd-media-types) compressed with [zstd][rfc8478]
+- `application/vnd.oci.artifact.manifest.v1+json`: [Artifact manifest](artifact.md)
 
 ## Media Type Conflicts
 
@@ -36,25 +39,40 @@ This section shows where the OCI Image Specification is compatible with formats 
 
 **Similar/related schema**
 
-- [application/vnd.docker.distribution.manifest.list.v2+json](https://github.com/docker/distribution/blob/master/docs/spec/manifest-v2-2.md#manifest-list) - mediaType is different
+- [application/vnd.docker.distribution.manifest.list.v2+json](https://github.com/distribution/distribution/blob/master/docs/spec/manifest-v2-2.md#manifest-list)
+  - `.annotations`: only present in OCI
+  - `.[]manifests.annotations`: only present in OCI
+  - `.[]manifests.urls`: only present in OCI
 
 ### application/vnd.oci.image.manifest.v1+json
 
 **Similar/related schema**
 
-- [application/vnd.docker.distribution.manifest.v2+json](https://github.com/docker/distribution/blob/master/docs/spec/manifest-v2-2.md#image-manifest-field-descriptions)
+- [application/vnd.docker.distribution.manifest.v2+json](https://github.com/distribution/distribution/blob/master/docs/spec/manifest-v2-2.md#image-manifest-field-descriptions)
+  - `.annotations`: only present in OCI
+  - `.config.annotations`: only present in OCI
+  - `.config.urls`: only present in OCI
+  - `.[]layers.annotations`: only present in OCI
 
 ### application/vnd.oci.image.layer.v1.tar+gzip
 
 **Interchangeable and fully compatible mime-types**
 
-- [application/vnd.docker.image.rootfs.diff.tar.gzip](https://github.com/docker/docker/blob/master/image/spec/v1.md#creating-an-image-filesystem-changeset)
+- [application/vnd.docker.image.rootfs.diff.tar.gzip](https://github.com/moby/moby/blob/v20.10.8/image/spec/v1.2.md#creating-an-image-filesystem-changeset)
 
 ### application/vnd.oci.image.config.v1+json
 
 **Similar/related schema**
 
-- [application/vnd.docker.container.image.v1+json](https://github.com/docker/docker/blob/master/image/spec/v1.md#image-json-description)
+- [application/vnd.docker.container.image.v1+json](https://github.com/moby/moby/blob/v20.10.8/image/spec/v1.2.md#image-json-description) (Docker Image Spec v1.2)
+  - `.config.Memory`: only present in Docker, and reserved in OCI
+  - `.config.MemorySwap`: only present in Docker, and reserved in OCI
+  - `.config.CpuShares`: only present in Docker, and reserved in OCI
+  - `.config.Healthcheck`: only present in Docker, and reserved in OCI
+- [Moby/Docker](https://github.com/moby/moby)
+  - `.config.ArgsEscaped`: Windows-specific Moby/Docker extension, deprecated in OCI, available for compatibility with older images.
+
+`.config.StopSignal` and `.config.Labels` are accidentally undocumented in Docker Image Spec v1.2, but these fields are not OCI-specific concepts.
 
 ## Relations
 
@@ -66,3 +84,4 @@ The following figure shows how the above media types reference each other:
 The image-index being a "fat manifest" references a list of image manifests per target platform. An image manifest references exactly one target configuration and possibly many layers.
 
 [rfc1952]: https://tools.ietf.org/html/rfc1952
+[rfc8478]: https://tools.ietf.org/html/rfc8478

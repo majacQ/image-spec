@@ -4,6 +4,7 @@ The image index is a higher-level manifest which points to specific [image manif
 While the use of an image index is OPTIONAL for image providers, image consumers SHOULD be prepared to process them.
 
 This section defines the `application/vnd.oci.image.index.v1+json` [media type](media-types.md).
+
 For the media type(s) that this document is compatible with, see the [matrix][matrix].
 
 ## *Image Index* Property Descriptions
@@ -34,10 +35,15 @@ For the media type(s) that this document is compatible with, see the [matrix][ma
     Implementations MUST support at least the following media types:
 
     - [`application/vnd.oci.image.manifest.v1+json`](manifest.md)
+    - [`application/vnd.oci.artifact.manifest.v1+json`](artifact.md)
+
+    Also, implementations SHOULD support the following media types:
+
+    - `application/vnd.oci.image.index.v1+json` (nested index)
 
     Image indexes concerned with portability SHOULD use one of the above media types.
     Future versions of the spec MAY use a different mediatype (i.e. a new versioned format).
-    An encountered `mediaType` that is unknown SHOULD be safely ignored.
+    An encountered `mediaType` that is unknown to the implementation MUST be ignored.
 
   - **`platform`** *object*
 
@@ -53,6 +59,7 @@ For the media type(s) that this document is compatible with, see the [matrix][ma
 
         This REQUIRED property specifies the operating system.
         Image indexes SHOULD use, and implementations SHOULD understand, values listed in the Go Language document for [`GOOS`][go-environment2].
+        An exception to this guidance is provided for Wasm applications that rely on the WASI system interface, where the `os` SHOULD be `wasi`.
 
     - **`os.version`** *string*
 
@@ -72,19 +79,13 @@ For the media type(s) that this document is compatible with, see the [matrix][ma
     - **`variant`** *string*
 
         This OPTIONAL property specifies the variant of the CPU.
-        Image indexes SHOULD use, and implementations SHOULD understand, values listed in the following table.
-        When the variant of the CPU is not listed in the table, values are implementation-defined and SHOULD be submitted to this specification for standardization.
-
-        | ISA/ABI         | `architecture` | `variant`   |
-        |-----------------|----------------|-------------|
-        | ARM 32-bit, v6  | `arm`          | `v6`        |
-        | ARM 32-bit, v7  | `arm`          | `v7`        |
-        | ARM 32-bit, v8  | `arm`          | `v8`        |
-        | ARM 64-bit, v8  | `arm64`        | `v8`        |
+        Image indexes SHOULD use, and implementations SHOULD understand, `variant` values listed in the [Platform Variants](#platform-variants) table.
 
     - **`features`** *array of strings*
 
         This property is RESERVED for future versions of the specification.
+
+  If multiple manifests match a client or runtime's requirements, the first matching entry SHOULD be used.
 
 - **`annotations`** *string-string map*
 
@@ -93,12 +94,24 @@ For the media type(s) that this document is compatible with, see the [matrix][ma
 
     See [Pre-Defined Annotation Keys](annotations.md#pre-defined-annotation-keys).
 
+## Platform Variants
+
+When the variant of the CPU is not listed in the table, values are implementation-defined and SHOULD be submitted to this specification for standardization.
+
+| ISA/ABI         | `architecture` | `variant`   |
+|-----------------|----------------|-------------|
+| ARM 32-bit, v6  | `arm`          | `v6`        |
+| ARM 32-bit, v7  | `arm`          | `v7`        |
+| ARM 32-bit, v8  | `arm`          | `v8`        |
+| ARM 64-bit, v8  | `arm64`        | `v8`        |
+
 ## Example Image Index
 
 *Example showing a simple image index pointing to image manifests for two platforms:*
 ```json,title=Image%20Index&mediatype=application/vnd.oci.image.index.v1%2Bjson
 {
   "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
   "manifests": [
     {
       "mediaType": "application/vnd.oci.image.manifest.v1+json",
@@ -117,6 +130,41 @@ For the media type(s) that this document is compatible with, see the [matrix][ma
         "architecture": "amd64",
         "os": "linux"
       }
+    }
+  ],
+  "annotations": {
+    "com.example.key1": "value1",
+    "com.example.key2": "value2"
+  }
+}
+```
+
+## Example Image Index with multiple media types
+
+*Example showing an image index pointing to manifests with multiple media types:*
+```json,title=Image%20Index&mediatype=application/vnd.oci.image.index.v1%2Bjson
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 7143,
+      "digest": "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+      "platform": {
+        "architecture": "ppc64le",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.artifact.manifest.v1+json",
+      "size": 7682,
+      "digest": "sha256:601570aaff1b68a61eb9c85b8beca1644e698003e0cdb5bce960f193d265a8b7",
+      "artifactType": "application/example",
+      "annotations": {
+          "com.example.artifactKey1": "value1",
+          "com.example.artifactKey2": "value2"
+        }
     }
   ],
   "annotations": {
